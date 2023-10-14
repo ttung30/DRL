@@ -1,0 +1,59 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/saun/differential_haibotlab/devel/include/**",
+        "/home/saun/ws_moveit/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_planners/chomp/chomp_motion_planner/include/**",
+        "/home/saun/differential_haibotlab/src/d3qn_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/ddpg_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/deep_rl_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/deep_sarsa_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/diffbot_landing/include/**",
+        "/home/saun/differential_haibotlab/src/differential_robot/include/**",
+        "/home/saun/differential_haibotlab/src/double_dqn_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/dqn_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/dueling_dqn_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/ekf/include/**",
+        "/home/saun/ws_moveit/src/geometric_shapes/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_planners/chomp/chomp_interface/include/**",
+        "/home/saun/ws_moveit/src/moveit_resources/prbt_ikfast_manipulator_plugin/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_ros/benchmarks/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_plugins/moveit_ros_control_interface/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_ros/move_group/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_ros/occupancy_map_monitor/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_ros/robot_interaction/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_ros/moveit_servo/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_setup_assistant/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_plugins/moveit_simple_controller_manager/include/**",
+        "/home/saun/ws_moveit/src/moveit_visual_tools/include/**",
+        "/home/saun/differential_haibotlab/src/navigation/include/**",
+        "/home/saun/differential_haibotlab/src/Person-following-robot/src/segway/obj_detection/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_planners/pilz_industrial_motion_planner/include/**",
+        "/home/saun/ws_moveit/src/moveit/moveit_planners/pilz_industrial_motion_planner_testutils/include/**",
+        "/home/saun/differential_haibotlab/src/qlearning_GoalChasing/include/**",
+        "/home/saun/differential_haibotlab/src/rnn_dqn_gazebo/include/**",
+        "/home/saun/differential_haibotlab/src/robot_simulations/robot_fake/include/**",
+        "/home/saun/differential_haibotlab/src/robot_simulations/robot_gazebo/include/**",
+        "/home/saun/ws_moveit/src/rviz_visual_tools/include/**",
+        "/home/saun/differential_haibotlab/src/sarsa_GoalChasing/include/**",
+        "/home/saun/differential_haibotlab/src/sarsa_avoidance_obs/include/**",
+        "/home/saun/ws_moveit/src/srdfdom/include/**",
+        "/home/saun/differential_haibotlab/src/velodyne_simulator-master/velodyne_gazebo_plugins/include/**",
+        "/home/saun/differential_haibotlab/src/Person-following-robot/src/segway/zed_description/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
