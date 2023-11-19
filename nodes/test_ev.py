@@ -41,15 +41,24 @@ class Env():
         self.self_rotation_z_speed=0
         self.linearx = 0
         self.lineary = 0
+        
+        
         self.pub_cmd_vel = rospy.Publisher('cmd_vel', Twist, queue_size=5)
         self.sub_odom = rospy.Subscriber('odom', Odometry, self.getOdometry)
         
         self.reset_proxy = rospy.ServiceProxy('gazebo/reset_simulation', Empty)
         self.unpause_proxy = rospy.ServiceProxy('gazebo/unpause_physics', Empty)
         self.pause_proxy = rospy.ServiceProxy('gazebo/pause_physics', Empty)
+        self.respawn_goal = Respawn()
         
-        
+    '''def OdometryCallBack(self, odometry):
+        self.self_linear_x_speed = odometry.twist.twist.linear.x
+        self.self_linear_y_speed = odometry.twist.twist.linear.y
+        self.self_rotation_z_speed = odometry.twist.twist.angular.z'''
+    '''def getGoalDistance(self):
+        goal_distance = round(math.hypot(self.goal_x - self.position.x, self.goal_y - self.position.y), 2)
 
+        return goal_distance'''
 
     def getOdometry(self, odom):
         self.linearx = odom.twist.twist.linear.x
@@ -59,20 +68,18 @@ class Env():
         orientation = odom.pose.pose.orientation
         orientation_list = [orientation.x, orientation.y, orientation.z, orientation.w]
         _, _, cur_theta = euler_from_quaternion(orientation_list)
+
         self.current_theta = cur_theta #radian
+        
         return self.position.x, self.position.y, self.current_theta
 
     def getState(self, scan,image):
         done = False
         min_range = 0.3
         scan_range = []
-
         bridge = CvBridge()
         image=bridge.imgmsg_to_cv2(image, desired_encoding="passthrough")
         image=np.nan_to_num(image, nan=0.0)
-        
-        image = np.array(image, dtype=np.float32)
-        image*=5
         
         for i in range(len(scan.ranges)):
             if scan.ranges[i] == float('Inf'):
@@ -81,10 +88,13 @@ class Env():
                 scan_range.append(0)
             else:
                 scan_range.append(scan.ranges[i])
-        
 
         if min_range > min(scan_range) > 0:
             done = True
+
+        image =image.astype(np.float32)
+        
+        
         return image , done
 
     def setReward(self, done, action):
@@ -125,7 +135,14 @@ class Env():
                 pass
             
         state, done = self.getState(data1,data)
-
+        
+        # # Switching Algorithms:
+        # if min(state[:20]) >= self.safe_dist:
+        #     status = self.FeedBackControl(odom)
+        #     self.enable_feedback_control = True
+        # else:
+        #     self.enable_feedback_control = False       
+            
         reward, counters = self.setReward( done,action)
 
         return np.asarray(state), reward, done, counters

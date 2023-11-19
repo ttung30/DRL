@@ -3,12 +3,12 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
-import torch.nn.init as init
+#import torch.nn.functional as F
 import rospy
 import random
 import numpy as np
 import os
+#from torchvision.transforms import functional as Fa
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from collections import deque
@@ -30,6 +30,7 @@ class MemoryBuffer():
         batch = random.sample(self.buffer, count)
         
         states_array = np.float32([array[0] for array in batch])
+        
         actions_array = np.float32([array[1] for array in batch])
         rewards_array = np.float32([array[2] for array in batch])
         next_states_array = np.float32([array[3] for array in batch])
@@ -68,9 +69,9 @@ class DuelingQAgent():
         self.epsilon_decay = 0.997      #0.996
         self.epsilon_min = 0.01
         self.tau = 0.01
-        self.batch_size = 64     
+        self.batch_size =64
         self.train_start = 64
-        self.memory_size = 1000000
+        self.memory_size = 45000
         self.RAM = MemoryBuffer(self.memory_size)
         
         self.Pred_model = DuelingQNetwork(self.state_size, self.action_size)
@@ -91,42 +92,38 @@ class DuelingQAgent():
         if self.load_model:
             loaded_state_dict = torch.load(self.dirPath+str(self.load_episode)+'.pt')
             self.Pred_model.load_state_dict(loaded_state_dict)
-    
-    # def getQvalue(self, reward, next_target, done):
-    #     done = done.numpy()
-    #     if done.any():
-    #         return (reward)
-    #     else:
-    #         return (reward + self.discount_factor * next_target.max(1)[0])
 
     def updateTargetModel(self):
         self.Target_model.load_state_dict(self.Pred_model.state_dict())
 
     def getAction(self, state):
-        state = torch.Tensor(np.array(state)).unsqueeze(0) # get a 1D array
-        self.q_value = self.Pred_model(state)
         
-        if self.mode == "train":
-            if np.random.rand() <= self.epsilon:
-                self.q_value = np.zeros(self.action_size)
-                action = random.randrange(self.action_size)
-            else:
+        if len(state.shape)==2:
+            state = torch.from_numpy(state)
+            state=state.unsqueeze(0).view(1, 1, 144, 176)
+            self.q_value = self.Pred_model(state)
+            
+            if self.mode == "train":
+                if np.random.rand() <= self.epsilon:
+                    self.q_value = np.zeros(self.action_size)
+                    action = random.randrange(self.action_size)
+                else:
+                    action = int(torch.argmax(self.q_value))
+                    print("(*) Predicted action: ", action)
+            if self.mode =="test":
                 action = int(torch.argmax(self.q_value))
-                print("(*) Predicted action: ", action)
-            
-        if self.mode =="test":
-            action = int(torch.argmax(self.q_value))
-            
-        return action
+            return action
+        
         
     def TrainModel(self):
         states, actions, rewards, next_states, dones = self.RAM.sample(self.batch_size)
-        states = torch.Tensor(np.array(states))
+        states = np.array(states).squeeze()
+        next_states = np.array(next_states).squeeze()
+        states = torch.tensor(states).view(64, 1, 144, 176)
+        next_states = torch.tensor(next_states).view(64, 1, 144, 176)
+
         actions = torch.Tensor(actions)
         actions = actions.type(torch.int64).unsqueeze(-1)
-        next_states = torch.Tensor(np.array(next_states))
-        
-        ## get Q value for state->next_state using q_target_net
         next_q_value = torch.max(self.Target_model(next_states), dim=1)[0]
 
         ## check if the episode terminates in next step
@@ -139,23 +136,20 @@ class DuelingQAgent():
 
         ## convert td_target to tensor
         td_target = torch.Tensor(q_value)
-
+   
         ## get predicted_values
         predicted_values = self.Pred_model(states).gather(1, actions).squeeze()
 
+      
         ## calculate the loss 
         self.loss = self.loss_func(predicted_values, td_target)
-
-        ## perform backprop and update weights
+         
         self.optimizer.zero_grad()
         self.loss.backward()
         self.optimizer.step()
         
-        ## soft-update target parameters for Double-DQN
-        # for target_param, param in zip(self.Target_model.parameters(), self.Pred_model.parameters()):
-        #     target_param.data.copy_(self.tau * param + (1 - self.tau) * target_param)
         
-        ## analysis loss function
+        
         self.episode_loss += predicted_values.shape[0] * self.loss.item()
         self.running_loss += self.loss.item()
         cal_loss = self.episode_loss / len(states)

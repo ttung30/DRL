@@ -9,7 +9,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 DATA_PATH = os.path.dirname(os.path.realpath(__file__))
-DATA_PATH = DATA_PATH.replace('dqn_gazebo/nodes', 'dqn_gazebo/save_model/PT_trial_with_fixed_goal_1/log_data')
+DATA_PATH = DATA_PATH.replace('dqn_gazebo/nodes', 'dqn_gazebo/save_model/Dueling_DQN_trial_1/log_data')
 
 def plotting_data(load_dir):
     reward_per_episode = np.genfromtxt(load_dir+'/reward_per_episode.csv', delimiter = ' , ')
