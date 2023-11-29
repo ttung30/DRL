@@ -125,7 +125,7 @@ class DuelingQAgent():
         actions = torch.Tensor(actions)
         actions = actions.type(torch.int64).unsqueeze(-1)
         next_q_value = torch.max(self.Target_model(next_states), dim=1)[0]
-
+        
         ## check if the episode terminates in next step
         q_value = np.zeros(self.batch_size)
         for i in range(self.batch_size):
