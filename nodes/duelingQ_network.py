@@ -61,5 +61,5 @@ class DuelingQNetwork(nn.Module):
         Advantages_function = self.Advantage_stream(feature)
       
         Q_star = Values_function + (Advantages_function - Advantages_function.mean(dim=1, keepdim=True))
-        print(Q_star)
+        
         return Q_star

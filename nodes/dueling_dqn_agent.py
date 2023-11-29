@@ -69,8 +69,8 @@ class DuelingQAgent():
         self.epsilon_decay = 0.997      #0.996
         self.epsilon_min = 0.01
         self.tau = 0.01
-        self.batch_size =64
-        self.train_start = 64
+        self.batch_size =8
+        self.train_start = 8
         self.memory_size = 45000
         self.RAM = MemoryBuffer(self.memory_size)
         
@@ -119,8 +119,8 @@ class DuelingQAgent():
         states, actions, rewards, next_states, dones = self.RAM.sample(self.batch_size)
         states = np.array(states).squeeze()
         next_states = np.array(next_states).squeeze()
-        states = torch.tensor(states).view(64, 1, 144, 176)
-        next_states = torch.tensor(next_states).view(64, 1, 144, 176)
+        states = torch.tensor(states).view(8, 1, 144, 176)
+        next_states = torch.tensor(next_states).view(8, 1, 144, 176)
 
         actions = torch.Tensor(actions)
         actions = actions.type(torch.int64).unsqueeze(-1)
