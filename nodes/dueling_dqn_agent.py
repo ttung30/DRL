@@ -176,8 +176,6 @@ class DuelingQAgent():
         tung=self.Pred_model(states)
         predicted_values = tung.gather(1, actions.view(64, 1, 1).expand(64, 1, tung.size(2))).squeeze()
 
-        
-
         self.loss=self.quantile_huber_loss(predicted_values, td_target)
        
         self.optimizer.zero_grad()
