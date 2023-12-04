@@ -9,6 +9,7 @@ import random
 import numpy as np
 import os
 #from torchvision.transforms import functional as Fa
+
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from collections import deque
@@ -55,7 +56,7 @@ class DuelingQAgent():
         self.dirPath = os.path.dirname(os.path.realpath(__file__))
         self.dirPath = self.dirPath.replace('dueling_dqn_gazebo/nodes', 'dueling_dqn_gazebo/save_model/Dueling_DQN_trial_1/pt_trial_1_')
         self.result = Float32MultiArray()
-
+        self.taus= torch.linspace(0.0, 1.0, 51, dtype=torch.float32)
         self.mode = mode
         self.load_model = False
         self.load_episode = load_eps
@@ -69,13 +70,13 @@ class DuelingQAgent():
         self.epsilon_decay = 0.997      #0.996
         self.epsilon_min = 0.01
         self.tau = 0.01
-        self.batch_size =8
-        self.train_start = 8
+        self.batch_size =64
+        self.train_start = 64
         self.memory_size = 45000
         self.RAM = MemoryBuffer(self.memory_size)
         
-        self.Pred_model = DuelingQNetwork(self.state_size, self.action_size)
-        self.Target_model = DuelingQNetwork(self.state_size, self.action_size)
+        self.Pred_model = DuelingQNetwork()
+        self.Target_model = DuelingQNetwork()
         
         self.optimizer = optim.AdamW(self.Pred_model.parameters(), self.learning_rate) # Adam Optimizer but with L2 Regularization implemented
         self.loss_func = nn.MSELoss()
@@ -95,13 +96,22 @@ class DuelingQAgent():
 
     def updateTargetModel(self):
         self.Target_model.load_state_dict(self.Pred_model.state_dict())
+    def wasserstein_distance(self,target_distribution, predicted_distribution):
+        # Sort the quantiles
+        
+        target_distribution, _ = torch.sort(target_distribution, dim=-1)
+        predicted_distribution, _ = torch.sort(predicted_distribution, dim=-1)
 
+        # Calculate the Wasserstein distance
+        wasserstein_distance = torch.abs(target_distribution - predicted_distribution).sum(dim=-1).mean(dim=-1)
+        
+        return wasserstein_distance
     def getAction(self, state):
         
         if len(state.shape)==2:
             state = torch.from_numpy(state)
             state=state.unsqueeze(0).view(1, 1, 144, 176)
-            self.q_value = self.Pred_model(state)
+            self.q_value =torch.mean(self.Pred_model(state), dim=2)
             
             if self.mode == "train":
                 if np.random.rand() <= self.epsilon:
@@ -114,42 +124,66 @@ class DuelingQAgent():
                 action = int(torch.argmax(self.q_value))
             return action
         
+
+
+    def quantile_huber_loss(self,target_quantiles, predicted_quantiles, kappa=1.0):
+        errors = target_quantiles- predicted_quantiles
+
+        # Compute Huber loss
+        huber_loss = torch.where(torch.abs(errors) < kappa,
+                                0.5 * errors.pow(2),
+                                kappa * (torch.abs(errors) - 0.5 * kappa))
         
+        tau_scaled = torch.abs(self.taus.unsqueeze(1).unsqueeze(1) - (errors.detach() < 0).float())
+        quantile_loss = tau_scaled * huber_loss
+    
+        wasserstein_distance_loss =self.wasserstein_distance(target_quantiles, predicted_quantiles)
+    
+        loss = quantile_loss.sum(dim=2).mean(dim=1).mean()
+      
+        loss = loss+wasserstein_distance_loss
+        
+        return loss
+
+    def soft_update(self, local_model, target_model):
+        
+        for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
+            target_param.data.copy_(1e-2*local_param.data + (1.0-1e-2)*target_param.data)
+
     def TrainModel(self):
         states, actions, rewards, next_states, dones = self.RAM.sample(self.batch_size)
         states = np.array(states).squeeze()
         next_states = np.array(next_states).squeeze()
-        states = torch.tensor(states).view(8, 1, 144, 176)
-        next_states = torch.tensor(next_states).view(8, 1, 144, 176)
+        states = torch.tensor(states).view(64, 1, 144, 176)
+        next_states = torch.tensor(next_states).view(64, 1, 144, 176)
 
         actions = torch.Tensor(actions)
         actions = actions.type(torch.int64).unsqueeze(-1)
-        next_q_value = torch.max(self.Target_model(next_states), dim=1)[0]
-        print(next_q_value)
+        
+        next_q_value = torch.max(self.Target_model(next_states), dim=1)[0].detach().numpy()
+        
         ## check if the episode terminates in next step
-        q_value = np.zeros(self.batch_size)
+        q_value = np.zeros((self.batch_size,51))
+        
         for i in range(self.batch_size):
             if dones[i]:
                 q_value[i] = rewards[i]
             else:
-                q_value[i] = rewards[i] + self.discount_factor * next_q_value[i]
+                
+                q_value[i] = rewards[i]+self.discount_factor * next_q_value[i]
 
-        ## convert td_target to tensor
         td_target = torch.Tensor(q_value)
-   
-        ## get predicted_values
-        predicted_values = self.Pred_model(states).gather(1, actions).squeeze()
+        tung=self.Pred_model(states)
+        predicted_values = tung.gather(1, actions.view(64, 1, 1).expand(64, 1, tung.size(2))).squeeze()
 
-      
-        ## calculate the loss 
-        self.loss = self.loss_func(predicted_values, td_target)
-         
+        
+
+        self.loss=self.quantile_huber_loss(predicted_values, td_target)
+       
         self.optimizer.zero_grad()
         self.loss.backward()
         self.optimizer.step()
-        
-        
-        
+        self.soft_update(self.Pred_model, self.Target_model)
         self.episode_loss += predicted_values.shape[0] * self.loss.item()
         self.running_loss += self.loss.item()
         cal_loss = self.episode_loss / len(states)
