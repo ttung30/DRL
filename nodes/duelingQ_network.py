@@ -1,65 +1,34 @@
-#!usr/bin/env python3
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
-import torch.nn.init as init
-import numpy as np
 
 class DuelingQNetwork(nn.Module):
-    def __init__(self, state_size, action_size):
+    def __init__(self):
         super(DuelingQNetwork, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=8,padding=2, bias=True)
-        #init.xavier_uniform_(self.conv1.weight, gain=nn.init.calculate_gain('relu'))
-        self.activation_conv1 = nn.ReLU()
-
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2, bias=True,padding=1)
-        #init.xavier_uniform_(self.conv2.weight, gain=nn.init.calculate_gain('relu'))
-        self.activation_conv2 = nn.ReLU()
-
-        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, bias=True,padding=1)
-        #init.xavier_uniform_(self.conv3.weight, gain=nn.init.calculate_gain('relu'))
-        
-        self.activation_conv3 = nn.ReLU()
-        
-        self.fc1 = nn.Linear(6336, 1024)
-        #init.xavier_uniform_(self.fc1.weight, gain=nn.init.calculate_gain('relu'))
-        self.activation_fc1 = nn.ReLU()
-
-        self.fc2 = nn.Linear(1024, 200)
-        #init.xavier_uniform_(self.fc2.weight, gain=nn.init.calculate_gain('relu'))
-        self.activation_fc2 = nn.ReLU()
+        self.num_actions = 5
+        self.num_quantiles = 51
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=8)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(64, 64, kernel_size=3, stride=1)
 
         
-        self.Values_stream = nn.Sequential(
-            nn.Linear(200, 50),
-            nn.ReLU(),
-            nn.Linear(50, 1)
-        )
-        # Advantage stream definition
-        self.Advantage_stream = nn.Sequential(
-            nn.Linear(200, 50),
-            nn.ReLU(),
-            nn.Linear(50, action_size)
-        )
         
-    def forward(self, feature):
-        feature = self.conv1(feature)
-        feature = self.activation_conv1(feature)
-        feature = self.conv2(feature)
-        feature = self.activation_conv2(feature)
-        feature = self.conv3(feature)
-        feature = self.activation_conv3(feature)
-        feature = feature.view(feature.size(0), -1)
-        feature = self.fc1(feature)
-        feature =self.activation_fc1(feature)
-        feature = self.fc2(feature)
-        feature =self.activation_fc2(feature)
-       
-        Values_function = self.Values_stream(feature)
-        Advantages_function = self.Advantage_stream(feature)
-      
-        Q_star = Values_function + (Advantages_function - Advantages_function.mean(dim=1, keepdim=True))
+        self.fc1 = nn.Linear(3072, 512)
+        self.fc2 = nn.Linear(512, 5 * 51)
+
+    def forward(self, x):
+   
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+
+        x = x.view(x.size(0), -1)
+
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        quantiles = x.view(-1, self.num_actions, self.num_quantiles)
         
-        return Q_star
+        return quantiles
+
+    
