@@ -143,11 +143,11 @@ class Env():
         while data is None and data1 is None:
             try:
                 data1 = rospy.wait_for_message('scan', LaserScan)
-                print("a")
+               
                 data = rospy.wait_for_message('/kinect/depth/image_raw', Image)
-                print("b")
+                
                 odom = rospy.wait_for_message('/odom', Odometry)
-                print("c")
+               
             except:
                 pass
 
