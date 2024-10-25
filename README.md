@@ -1,5 +1,5 @@
 # Paper
-[Paper](https://ieeexplore.ieee.org/abstract/document/10582923)
+[Develop A Navigation Approach for Mobile Robots Based on the Distributional Deep Reinforcement Learning Framework](https://ieeexplore.ieee.org/abstract/document/10582923)
 
 # Simulation Environment
 ```bash
