@@ -1,0 +1,6 @@
+# Vscode setting
+.vscode/
+# log of training
+log
+#cache
+__pycache__
