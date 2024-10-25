@@ -1,21 +1,18 @@
 #!usr/bin/env python3
-
 import rospy
 import numpy as np
 import matplotlib.pyplot as plt
 from math import *
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-DATA_PATH = os.path.dirname(os.path.realpath(__file__))
-DATA_PATH = DATA_PATH.replace('dqn_gazebo/nodes', 'dqn_gazebo/save_model/Dueling_DQN_trial_1/log_data')
+
+output_path = 'log/Dueling_DQN_trial_1/log_data'
+
 
 def plotting_data(load_dir):
+
     reward_per_episode = np.genfromtxt(load_dir+'/reward_per_episode.csv', delimiter = ' , ')
     steps_per_episode = np.genfromtxt(load_dir+'/steps_per_episode.csv', delimiter = ' , ')
     loss_per_epoch = np.genfromtxt(load_dir+'/loss.csv', delimiter = ' , ')
-    
     accumulated_reward = np.array([])
     average_steps_per10eps = np.array([])
     episodes_10th = np.arange(10, len(reward_per_episode)+10, 10)
@@ -67,7 +64,7 @@ def plotting_data(load_dir):
 if __name__ == '__main__':
     try:
         print("** PLOTTING DATA ***")
-        plotting_data(DATA_PATH)
+        plotting_data(output_path)
     except rospy.ROSInterruptException:
         print("--> Exiting !!!")
         pass

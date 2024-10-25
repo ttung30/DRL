@@ -1,24 +1,20 @@
 #!usr/bin/env python3
-
+from std_msgs.msg import Float32MultiArray
+from tool.intial_policy import Env
+from tool.agent import *
 import torch
 import rospy
 import numpy as np
-import os
 import time 
 from datetime import datetime
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from std_msgs.msg import Float32MultiArray
-from src.dueling_dqn_env import Env
-from dueling_dqn_agent import *
 
-dirPath = os.path.dirname(os.path.realpath(__file__))
-dirPath = dirPath.replace('/home/tung/Downloads/dueling_dqn_gazebo/nodes', '/home/tung/Downloads/dueling_dqn_gazebo/save_model/Dueling_DQN_trial_1')
-LOG_DATA_DIR = dirPath + '/log_data'
+
+LOG_DATA_DIR = '/log_data'
 
 EPISODES = 10000    
 
 def Training():
+    """"""
     mode = "train"
     load_episodes = 0
     rospy.init_node('dueling_dqn_gazebo_pt_model')
