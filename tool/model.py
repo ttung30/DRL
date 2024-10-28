@@ -2,9 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class DuelingQNetwork(nn.Module):
+class DRLModel(nn.Module):
     def __init__(self):
-        super(DuelingQNetwork, self).__init__()
+        super(DRLModel, self).__init__()
         self.num_actions = 5
         self.num_quantiles = 51
         self.conv1 = nn.Conv2d(1, 32, kernel_size=8, stride=8)
