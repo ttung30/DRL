@@ -125,17 +125,19 @@ class Env():
         vel_cmd.linear.x = self.const_vel
         vel_cmd.angular.z = ang_vel
         self.pub_cmd_vel.publish(vel_cmd)
-        data = None
-        odom = None
-        data1= None
-        while data is None and data1 is None:
+        scan_data = None
+        odom_data = None
+        depth_image_data=None
+        while scan_data is None:
             try:
-                data1 = rospy.wait_for_message('scan', LaserScan)
-                data = rospy.wait_for_message('/kinect/depth/image_raw', Image)
-                odom = rospy.wait_for_message('/odom', Odometry)
+                scan_data = rospy.wait_for_message('scan', LaserScan)
+                depth_image_data = rospy.wait_for_message('/kinect/depth/image_raw', Image)
+                odom_data = rospy.wait_for_message('/odom', Odometry)
             except:
                 pass
-        state, done = self.getState(data1,data)
+        if self.initGoal:
+            self.initGoal = False
+        state, done = self.getState(scan_data,depth_image_data)
         reward, counters = self.setReward( done,action)
         return np.asarray(state), reward, done, counters
 
@@ -151,21 +153,18 @@ class Env():
             self.reset_proxy()
         except (rospy.ServiceException) as e:
             print("gazebo/reset_simulation service call failed")
-        data = None
-        odom = None
-        data1= None
-        while data is None and data1 is None:
+        scan_data = None
+        odom_data = None
+        depth_image_data=None
+        while scan_data is None:
             try:
-                data1 = rospy.wait_for_message('scan', LaserScan)
-               
-                data = rospy.wait_for_message('/kinect/depth/image_raw', Image)
-                
-                odom = rospy.wait_for_message('/odom', Odometry)
-               
+                scan_data = rospy.wait_for_message('scan', LaserScan)
+                depth_image_data = rospy.wait_for_message('/kinect/depth/image_raw', Image)
+                odom_data = rospy.wait_for_message('/odom', Odometry)
             except:
                 pass
         if self.initGoal:
             self.initGoal = False
-        self.init_x, self.init_y, self.current_theta = self.getOdometry(odom)
-        state, _ = self.getState(data1,data)
+        self.init_x, self.init_y, self.current_theta = self.getOdometry(odom_data)
+        state, _ = self.getState(scan_data,depth_image_data)
         return np.asarray(state)
